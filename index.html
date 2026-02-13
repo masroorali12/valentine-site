@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Amina</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg,#ffe6f0,#ffd1e6); 
+    overflow:hidden;
+    position:relative;
+}
+
+/* Background floating hearts */
+.background-heart{
+    position:absolute;
+    font-size:18px;
+    animation:floatUpBg 8s linear infinite;
+    color: rgba(255,105,180,0.4);
+    pointer-events:none;
+}
+
+@keyframes floatUpBg{
+    from{transform:translateY(100vh) rotate(0deg);}
+    to{transform:translateY(-10vh) rotate(360deg);}
+}
+
+/* Card */
+.card{
+    background:white;
+    padding:50px 40px;
+    border-radius:35px;
+    box-shadow:0 25px 70px rgba(255,105,180,0.3);
+    max-width:500px;
+    width:90%;
+    text-align:center;
+    position:relative;
+    transition:0.4s ease;
+}
+
+/* Gradient border */
+.card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:35px;
+    padding:3px;
+    background:linear-gradient(135deg,#ff7eb3,#ff758c,#ff4e91);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+}
+
+h1{
+    font-weight:500;
+    font-size:28px;
+    margin-bottom:30px;
+    color:#d63384;
+    line-height:1.4;
+}
+
+/* Buttons container inside card (only No button) */
+.buttons{
+    position:relative; 
+    margin-top:20px;
+    height:80px; /* room for moving No button */
+}
+
+/* Buttons */
+button{
+    padding:12px 28px;
+    font-size:16px;
+    border-radius:30px;
+    cursor:pointer;
+    transition:0.3s ease;
+    border:none;
+}
+
+#yes{
+    background:#d63384;
+    color:white;
+    box-shadow:0 10px 25px rgba(214,51,132,0.4);
+    z-index:10; 
+    margin-top:30px;
+    padding:15px 40px;
+}
+
+/* Yes button outside card */
+#yesWrapper{
+    margin-top:30px;
+    text-align:center;
+}
+
+#yes:hover{
+    transform:scale(1.1);
+}
+
+#no{
+    background:white;
+    border:2px solid #d63384;
+    color:#d63384;
+    position:absolute; 
+    top:0;
+}
+
+/* Celebration */
+.celebration{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background: linear-gradient(135deg,#fbc2eb,#a6c1ee);
+    text-align:center;
+    color:white;
+    animation:fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:scale(0.95);}
+    to{opacity:1; transform:scale(1);}
+}
+
+/* Floating hearts after YES */
+.heart{
+    position:absolute;
+    font-size:22px;
+    animation:floatUp 6s linear forwards;
+}
+
+@keyframes floatUp{
+    from{transform:translateY(100vh); opacity:1;}
+    to{transform:translateY(-10vh); opacity:0;}
+}
+
+/* Emoji pop effect */
+.pop-emoji{
+    position:absolute;
+    font-size:24px;
+    animation:popUp 0.8s ease forwards;
+    pointer-events:none;
+}
+
+@keyframes popUp{
+    0%{transform:translateY(0) scale(0); opacity:1;}
+    50%{transform:translateY(-30px) scale(1.2);}
+    100%{transform:translateY(-60px) scale(0); opacity:0;}
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Background hearts -->
+<div class="background-heart" style="left:5vw;">💖</div>
+<div class="background-heart" style="left:20vw;">💗</div>
+<div class="background-heart" style="left:35vw;">💘</div>
+<div class="background-heart" style="left:50vw;">💞</div>
+<div class="background-heart" style="left:65vw;">💕</div>
+<div class="background-heart" style="left:80vw;">💓</div>
+
+<div class="card" id="card">
+    <h1>
+        Amina,<br>
+        Will you be my Valentine?
+    </h1>
+
+    <div class="buttons" id="buttonsContainer">
+        <button id="no">(No)</button>
+    </div>
+</div>
+
+<!-- Yes button outside card -->
+<div id="yesWrapper">
+    <button id="yes">Yes</button>
+</div>
+
+<script>
+const yesBtn = document.getElementById("yes");
+const noBtn = document.getElementById("no");
+const buttonsContainer = document.getElementById("buttonsContainer");
+
+let yesScale = 1;
+
+// No messages after first click
+const noMessages = [
+    "Are you sure? Please don’t say no 😢",
+    "You make me sad 😔",
+    "Please don’t say no 😥",
+    "I request… tap the yes please 💖"
+];
+
+let firstClick = true;
+
+// Move NO anywhere inside card
+noBtn.addEventListener("click", () => {
+    const containerRect = buttonsContainer.parentElement.getBoundingClientRect();
+    const buttonRect = noBtn.getBoundingClientRect();
+
+    // Full width and height inside card
+    const minX = 0;
+    const maxX = containerRect.width - buttonRect.width;
+    const minY = 0;
+    const maxY = containerRect.height - buttonRect.height;
+
+    const x = Math.random() * (maxX - minX) + minX;
+    const y = Math.random() * (maxY - minY) + minY;
+
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+
+    // Change message after first click
+    if(firstClick){
+        noBtn.innerText = noMessages[0];
+        firstClick = false;
+    } else {
+        const msg = noMessages[Math.floor(Math.random()*noMessages.length)];
+        noBtn.innerText = msg;
+    }
+
+    // Slight YES grow
+    yesScale += 0.05;
+    yesBtn.style.transform = "scale(" + yesScale + ")";
+});
+
+// YES click triggers fireworks + emoji pops
+yesBtn.addEventListener("click", () => {
+
+    document.body.innerHTML = `
+        <canvas id="fireworks"></canvas>
+        <div class="celebration">
+            <h1 style="font-size:38px; max-width:700px;">
+                Amina, you just made my heart smile in ways I can't explain.
+            </h1>
+            <p style="margin-top:20px; font-size:20px; max-width:600px;">
+                I feel like the luckiest person in the world to have you as my Valentine. 
+                Thank you for saying YES and making this day unforgettable! 💖
+            </p>
+        </div>
+    `;
+
+    startFireworks();
+    startHearts();
+    startEmojiPop();
+});
+
+/* Fireworks */
+function startFireworks(){
+    const canvas = document.getElementById("fireworks");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+
+    function createBurst(){
+        const x = Math.random()*canvas.width;
+        const y = Math.random()*canvas.height/2;
+
+        for(let i=0;i<40;i++){
+            const angle = Math.random()*2*Math.PI;
+            const speed = Math.random()*4+2;
+            particles.push({
+                x:x,
+                y:y,
+                dx:Math.cos(angle)*speed,
+                dy:Math.sin(angle)*speed,
+                life:80
+            });
+        }
+    }
+
+    function animate(){
+        ctx.fillStyle="rgba(0,0,0,0.15)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        particles.forEach((p,index)=>{
+            p.x+=p.dx;
+            p.y+=p.dy;
+            p.life--;
+
+            ctx.fillStyle="hsl("+Math.random()*360+",100%,70%)";
+            ctx.beginPath();
+            ctx.arc(p.x,p.y,3,0,Math.PI*2);
+            ctx.fill();
+
+            if(p.life<=0){
+                particles.splice(index,1);
+            }
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    setInterval(createBurst,900);
+    animate();
+}
+
+/* Floating Hearts After YES */
+function startHearts(){
+    function createHeart(){
+        const heart=document.createElement("div");
+        heart.className="heart";
+        heart.innerHTML="❤";
+        heart.style.left=Math.random()*100+"vw";
+        heart.style.color="rgba(255,255,255,0.8)";
+        document.body.appendChild(heart);
+        setTimeout(()=>heart.remove(),6000);
+    }
+
+    for(let i=0;i<15;i++) createHeart();
+    setInterval(createHeart,400);
+}
+
+/* Extra pop emojis after YES */
+function startEmojiPop(){
+    const emojis = ["💥","💖","💞","✨","🎆"];
+    function popEmoji(){
+        const pop = document.createElement("div");
+        pop.className="pop-emoji";
+        pop.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+        pop.style.left = Math.random()*80 + "vw";
+        pop.style.top = Math.random()*80 + "vh";
+        document.body.appendChild(pop);
+        setTimeout(()=>pop.remove(),800);
+    }
+    for(let i=0;i<20;i++) popEmoji();
+    setInterval(popEmoji,300);
+}
+</script>
+
+</body>
+</html>
